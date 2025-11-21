@@ -117,12 +117,14 @@ public class HeaderAnalyzerService {
     }
 
     private int calculateOverallScore(List<HeaderAnalysis> analyses) {
-        int totalPossible = analyses.stream()
+        int totalAchieved = analyses.stream()
             .mapToInt(HeaderAnalysis::getScore)
             .sum();
-        int maxPossible = SecurityHeader.values().length * 15;
+        int totalPossible = java.util.Arrays.stream(SecurityHeader.values())
+            .mapToInt(SecurityHeader::getMaxScore)
+            .sum();
 
-        return (int) Math.round((totalPossible * 100.0) / maxPossible);
+        return (int) Math.round((totalAchieved * 100.0) / totalPossible);
     }
 
     private String determineSecurityLevel(int score) {
