@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/v1/security-analyzer")
@@ -19,13 +20,13 @@ public class SecurityAnalyzerController {
     private final HeaderAnalyzerService headerAnalyzerService;
 
     @PostMapping("/analyze")
-    public ResponseEntity<SecurityAnalysisResponse> analyzeSecurityHeaders(
+    public Mono<ResponseEntity<SecurityAnalysisResponse>> analyzeSecurityHeaders(
             @Valid @RequestBody AnalysisRequest request) {
 
         log.info("Received analysis request for URL: {}", request.getUrl());
 
-        SecurityAnalysisResponse response = headerAnalyzerService.analyzerUrl(request);
-        return ResponseEntity.ok(response);
+        return headerAnalyzerService.analyzerUrl(request)
+            .map(ResponseEntity::ok);
     }
 
     @GetMapping("/health")

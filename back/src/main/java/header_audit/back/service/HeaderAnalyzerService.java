@@ -14,6 +14,7 @@ import header_audit.back.enums.SecurityHeader;
 import header_audit.back.model.HeaderAnalysis;
 import header_audit.back.model.SecurityAnalysisResponse;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
 @Service
 @Slf4j
@@ -24,30 +25,28 @@ public class HeaderAnalyzerService {
         this.webClient = webClientBuilder.build();
     }
 
-    public SecurityAnalysisResponse analyzerUrl(AnalysisRequest request) {
+    public Mono<SecurityAnalysisResponse> analyzerUrl(AnalysisRequest request) {
         String url = normalizeUrl(request.getUrl());
 
         log.info("Starting security analysis for URL: {}", url);
 
-        Map<String, List<String>> headers = fetchHeaders(url);
+        return fetchHeaders(url)
+            .map(headers -> {
+                List<HeaderAnalysis> headerAnalyses = analyzeSecurityHeaders(headers);
+                int overallScore = calculateOverallScore(headerAnalyses);
+                String securityLevel = determineSecurityLevel(overallScore);
+                List<String> recommendations = generateRecommendations(headerAnalyses);
 
-        List<HeaderAnalysis> headerAnalyses = analyzeSecurityHeaders(headers);
-
-        int overallScore = calculateOverallScore(headerAnalyses);
-
-        String securityLevel = determineSecurityLevel(overallScore);
-
-        List<String> recommendations = generateRecommendations(headerAnalyses);
-
-        return SecurityAnalysisResponse
-            .builder()
-            .url(url)
-            .overallScore(overallScore)
-            .securityLevel(securityLevel)
-            .headers(headerAnalyses)
-            .recommendations(recommendations)
-            .analysisTimestamp(Instant.now().toEpochMilli())
-            .build();
+                return SecurityAnalysisResponse
+                    .builder()
+                    .url(url)
+                    .overallScore(overallScore)
+                    .securityLevel(securityLevel)
+                    .headers(headerAnalyses)
+                    .recommendations(recommendations)
+                    .analysisTimestamp(Instant.now().toEpochMilli())
+                    .build();
+            });
     }
 
     private String normalizeUrl(String url) {
@@ -57,7 +56,7 @@ public class HeaderAnalyzerService {
         return url;
     }
 
-    private Map<String, List<String>> fetchHeaders(String url) {
+    private Mono<Map<String, List<String>>> fetchHeaders(String url) {
         return webClient.head()
                 .uri(url)
                 .retrieve()
@@ -68,8 +67,7 @@ public class HeaderAnalyzerService {
                         headerMap.put(key, new ArrayList<>(values))
                     );
                     return headerMap;
-                })
-                .block();
+                });
     }
 
     private List<HeaderAnalysis> analyzeSecurityHeaders(Map<String, List<String>> headers) {
