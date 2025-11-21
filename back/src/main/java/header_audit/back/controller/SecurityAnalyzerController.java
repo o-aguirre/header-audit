@@ -25,18 +25,8 @@ public class SecurityAnalyzerController {
 
         log.info("Received analysis request for URL: {}", request.getUrl());
 
-        try {
-            SecurityAnalysisResponse response = headerAnalyzerService.analyzerUrl(request);
-            return ResponseEntity.ok(response);
-
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid URL provided: {}", request.getUrl(), e);
-            return ResponseEntity.badRequest().build();
-
-        } catch (Exception e) {
-            log.error("Error analyzing URL: {}", request.getUrl(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        SecurityAnalysisResponse response = headerAnalyzerService.analyzerUrl(request);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/health")
