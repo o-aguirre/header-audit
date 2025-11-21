@@ -12,8 +12,6 @@ public class WebClientConfig {
         return WebClient.builder()
                 .codecs(configurer -> configurer
                         .defaultCodecs()
-                        .maxInMemorySize(16 * 1024 * 1024))
-                .build()
-                .mutate();
+                        .maxInMemorySize(16 * 1024 * 1024));
     }
 }

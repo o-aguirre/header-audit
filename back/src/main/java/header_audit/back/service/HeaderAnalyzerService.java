@@ -130,7 +130,7 @@ public class HeaderAnalyzerService {
             .sum();
         int maxPossible = SecurityHeader.values().length * 15;
 
-        return (int) Math.round(totalPossible * 100.0) / maxPossible;
+        return (int) Math.round((totalPossible * 100.0) / maxPossible);
     }
 
     private String determineSecurityLevel(int score) {
