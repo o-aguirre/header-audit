@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import header_audit.back.dto.AnalysisRequest;
 import header_audit.back.enums.SecurityHeader;
@@ -18,10 +18,10 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class HeaderAnalyzerService {
-    private final WebClient webClient;
+    private final RestClient restClient;
 
-    public HeaderAnalyzerService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.build();
+    public HeaderAnalyzerService(RestClient.Builder restClientBuilder) {
+        this.restClient = restClientBuilder.build();
     }
 
     public SecurityAnalysisResponse analyzerUrl(AnalysisRequest request) {
@@ -29,25 +29,33 @@ public class HeaderAnalyzerService {
 
         log.info("Starting security analysis for URL: {}", url);
 
-        Map<String, List<String>> headers = fetchHeaders(url);
+        try {
+            Map<String, List<String>> headers = fetchHeaders(url);
 
-        List<HeaderAnalysis> headerAnalyses = analyzeSecurityHeaders(headers);
+            List<HeaderAnalysis> headerAnalyses = analyzeSecurityHeaders(headers);
 
-        int overallScore = calculateOverallScore(headerAnalyses);
+            int overallScore = calculateOverallScore(headerAnalyses);
 
-        String securityLevel = determineSecurityLevel(overallScore);
+            String securityLevel = determineSecurityLevel(overallScore);
 
-        List<String> recommendations = generateRecommendations(headerAnalyses);
+            List<String> recommendations = generateRecommendations(headerAnalyses);
 
-        return SecurityAnalysisResponse
-            .builder()
-            .url(url)
-            .overallScore(overallScore)
-            .securityLevel(securityLevel)
-            .headers(headerAnalyses)
-            .recommendations(recommendations)
-            .analysisTimestamp(Instant.now().toEpochMilli())
-            .build();
+            return SecurityAnalysisResponse
+                .builder()
+                .url(url)
+                .overallScore(overallScore)
+                .securityLevel(securityLevel)
+                .headers(headerAnalyses)
+                .recommendations(recommendations)
+                .analysisTimestamp(Instant.now().toEpochMilli())
+                .build();
+        } catch (RestClientResponseException e) {
+            log.error("Error fetching headers from URL: {}", url, e);
+            throw new RuntimeException("Failed to analyze URL: " + e.getStatusCode());
+        } catch (Exception e) {
+            log.error("Unexpected error analyzing URL: {}", url, e);
+            throw new RuntimeException("Failed to analyze URL: " + e.getMessage());
+        }
     }
 
     private String normalizeUrl(String url) {
@@ -58,18 +66,16 @@ public class HeaderAnalyzerService {
     }
 
     private Map<String, List<String>> fetchHeaders(String url) {
-        return webClient.head()
+        org.springframework.http.ResponseEntity<Void> response = restClient.head()
                 .uri(url)
                 .retrieve()
-                .toBodilessEntity()
-                .map(response -> {
-                    Map<String, List<String>> headerMap = new java.util.HashMap<>();
-                    response.getHeaders().forEach((key, values) -> 
-                        headerMap.put(key, new ArrayList<>(values))
-                    );
-                    return headerMap;
-                })
-                .block();
+                .toBodilessEntity();
+        
+        Map<String, List<String>> headerMap = new java.util.HashMap<>();
+        response.getHeaders().forEach((key, values) -> 
+            headerMap.put(key, new ArrayList<>(values))
+        );
+        return headerMap;
     }
 
     private List<HeaderAnalysis> analyzeSecurityHeaders(Map<String, List<String>> headers) {
