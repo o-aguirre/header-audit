@@ -92,7 +92,7 @@ public enum SecurityHeader {
         this.maxScore = maxScore;
         this.severity = severity;
         this.description = description;
-        this.recommendation = recommendation ;
+        this.recommendation = recommendation;
     }
 
 }
