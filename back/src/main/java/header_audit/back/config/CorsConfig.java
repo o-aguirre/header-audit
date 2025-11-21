@@ -15,22 +15,22 @@ public class CorsConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         
-        // Permitir credenciales
+        // Allow credentials
         config.setAllowCredentials(true);
         
-        // Orígenes permitidos (ajusta según tu frontend)
+        // Allowed origins (adjust according to your frontend)
         config.setAllowedOrigins(Arrays.asList(
-            "http://localhost:3000",  // React en desarrollo
-            "http://localhost:5173"   // Vite en desarrollo
+            "http://localhost:3000",  // React in development
+            "http://localhost:5173"   // Vite in development
         ));
         
-        // Métodos HTTP permitidos
+        // Allowed HTTP methods
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         
-        // Headers permitidos
+        // Allowed headers
         config.setAllowedHeaders(Arrays.asList("*"));
         
-        // Headers expuestos
+        // Exposed headers
         config.setExposedHeaders(Arrays.asList("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
