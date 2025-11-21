@@ -72,7 +72,7 @@ public class HeaderAnalyzerService {
                 .block();
     }
 
-    private List<HeaderAnalysis> analyzeSecurityHeaders (Map<String, List<String>> headers) {
+    private List<HeaderAnalysis> analyzeSecurityHeaders(Map<String, List<String>> headers) {
         List<HeaderAnalysis> analyses = new ArrayList<>();
 
         for (SecurityHeader securityHeader : SecurityHeader.values()) {
