@@ -29,25 +29,33 @@ public class HeaderAnalyzerService {
 
         log.info("Starting security analysis for URL: {}", url);
 
-        Map<String, List<String>> headers = fetchHeaders(url);
+        try {
+            Map<String, List<String>> headers = fetchHeaders(url);
 
-        List<HeaderAnalysis> headerAnalyses = analyzeSecurityHeaders(headers);
+            List<HeaderAnalysis> headerAnalyses = analyzeSecurityHeaders(headers);
 
-        int overallScore = calculateOverallScore(headerAnalyses);
+            int overallScore = calculateOverallScore(headerAnalyses);
 
-        String securityLevel = determineSecurityLevel(overallScore);
+            String securityLevel = determineSecurityLevel(overallScore);
 
-        List<String> recommendations = generateRecommendations(headerAnalyses);
+            List<String> recommendations = generateRecommendations(headerAnalyses);
 
-        return SecurityAnalysisResponse
-            .builder()
-            .url(url)
-            .overallScore(overallScore)
-            .securityLevel(securityLevel)
-            .headers(headerAnalyses)
-            .recommendations(recommendations)
-            .analysisTimestamp(Instant.now().toEpochMilli())
-            .build();
+            return SecurityAnalysisResponse
+                .builder()
+                .url(url)
+                .overallScore(overallScore)
+                .securityLevel(securityLevel)
+                .headers(headerAnalyses)
+                .recommendations(recommendations)
+                .analysisTimestamp(Instant.now().toEpochMilli())
+                .build();
+        } catch (RestClientResponseException e) {
+            log.error("Error fetching headers from URL: {}", url, e);
+            throw new RuntimeException("Failed to analyze URL: " + e.getStatusCode());
+        } catch (Exception e) {
+            log.error("Unexpected error analyzing URL: {}", url, e);
+            throw new RuntimeException("Failed to analyze URL: " + e.getMessage());
+        }
     }
 
     private String normalizeUrl(String url) {
